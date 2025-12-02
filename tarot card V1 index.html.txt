@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mystic Arcana Reading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400&display=swap');
+
+        /* Updated Colors for Deeper, More Ornate Look */
+        :root {
+            --gold: #FFD700; /* Richer Gold */
+            --gold-dim: #D4AF37; 
+            --void-dark: #0A041A; /* Very Deep Indigo/Void */
+            --void-purple: #1A0D36; /* Dark Purple Base */
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 215, 0, 0.1);
+            --gold-shadow: 0 0 10px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: var(--void-dark);
+            color: white;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2, h3, .font-serif {
+            font-family: 'Cinzel', serif;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.3); /* Subtle text glow */
+        }
+
+        /* Mysterious Background Animation - Keep */
+        #stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse at bottom, #10062a 0%, var(--void-dark) 100%);
+            overflow: hidden;
+        }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0; animation: twinkle var(--duration) ease-in-out infinite; }
+        @keyframes twinkle {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: var(--max-opacity); transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+        .nebula {
+            position: fixed; top: 50%; left: 50%; width: 150vw; height: 150vw;
+            background: radial-gradient(circle, rgba(90, 40, 180, 0.25) 0%, rgba(0,0,0,0) 70%);
+            transform: translate(-50%, -50%); z-index: 0;
+            animation: pulse-nebula 10s ease-in-out infinite alternate;
+        }
+
+        /* UI Styles */
+        .text-gold { color: var(--gold); }
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .input-glass {
+            background: var(--void-purple);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 12px;
+            transition: border-color 0.3s;
+        }
+        .input-glass:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+            color: var(--void-dark);
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+        .btn-gold:hover {
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+        }
+        .btn-gold:active {
+            transform: scale(0.98);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        .btn-gold:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* --- ORNATE CARD STYLES --- */
+        .card-container {
+            perspective: 1000px;
+            width: 120px;
+            height: 200px;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.8);
+            border-radius: 18px; /* Slightly larger border-radius for frame */
+        }
+        .card-container.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 18px;
+            overflow: hidden;
+            
+            /* Core Ornate Border */
+            border: 3px solid var(--gold);
+            box-shadow: var(--gold-shadow), inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Card Back (Deep Indigo with Ornate Symbol) */
+        .card-back {
+            background: var(--void-purple);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .card-pattern-symbol {
+            width: 80%; height: 90%; border: 2px solid var(--gold-dim); border-radius: 12px;
+            position: relative;
+            background: linear-gradient(180deg, rgba(26, 13, 54, 1) 0%, rgba(10, 4, 26, 1) 100%);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .card-center-symbol {
+            color: var(--gold); 
+            font-size: 3rem; /* Larger, dominant symbol */
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.7));
+            opacity: 0.8;
+        }
+
+        /* Card Front (Reading Side) */
+        .card-front {
+            background: var(--void-dark);
+            transform: rotateY(180deg);
+        }
+        .card-image {
+            width: 100%; height: 100%; background-size: cover; background-position: center;
+        }
+        .card-image img {
+            /* Illustration area styling */
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            object-fit: cover; /* Ensure image covers the area */
+        }
+
+        /* Animation */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--gold);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Mobile safe-area padding */
+        .pb-safe { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+        .pt-safe { padding-top: calc(1rem + env(safe-area-inset-top)); }
+
+        /* Adjusted Card Display for Results View for better illustration visibility */
+        .results-card-content {
+            padding: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: space-between;
+        }
+        .results-card-content img {
+            width: 100%;
+            flex-grow: 1; /* Allow image to take up most of the space */
+            height: auto;
+            max-height: 80px; /* Constrain height for mobile display */
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        .results-card-content p.card-title {
+            font-size: 8px;
+            line-height: 1;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+
+    <!-- Background Elements -->
+    <div id="stars-container"></div>
+    <div class="nebula"></div>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow relative z-10 px-6 py-8 w-full max-w-md mx-auto pt-safe pb-safe">
+        
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl text-gold font-serif drop-shadow-lg tracking-wider">MYSTIC ARCANA</h1>
+            <p class="text-gray-400 font-light text-sm tracking-wide">Personalized Tarot Insights</p>
+        </header>
+
+        <!-- Dynamic Content View -->
+        <div id="app-view">
+            <!-- Content for views will be injected here -->
+        </div>
+
+    </main>
+
+    <!-- Bottom Tab Bar (App Simulation) -->
+    <nav class="fixed bottom-0 w-full glass-panel border-b-0 border-x-0 rounded-b-none z-50 pb-safe hidden" id="app-nav">
+        <div class="flex justify-around items-center h-16 max-w-md mx-auto">
+            <a href="#" class="text-gold flex flex-col items-center gap-1">
+                <i class="fas fa-layer-group text-lg"></i>
+                <span class="text-[10px] tracking-wider opacity-80">READING</span>
+            </a>
+            <a href="#" class="text-gray-500 flex flex-col items-center gap-1 hover:text-gray-300 transition">
+                <i class="fas fa-book-open text-lg"></i>
+                <span class="text-[10px] tracking-wider opacity-80">GUIDE</span>
+            </a>
+            <a href="#" class="text-gray-500 flex flex-col items-center gap-1 hover:text-gray-300 transition">
+                <i class="fas fa-user-astronaut text-lg"></i>
+                <span class="text-[10px] tracking-wider opacity-80">PROFILE</span>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+        // --- Global State ---
+        const state = {
+            view: 'input', // 'input', 'draw', 'results'
+            userData: {},
+            drawnCards: [],
+            readingText: null,
+            loading: false
+        };
+
+        // --- Simulated Tarot Deck (Images are the illustrations) ---
+        const cardDeck = [
+            { name: "The Fool", desc: "Beginnings, innocence, spontaneity.", img: "https://images.unsplash.com/photo-1636195225010-09a5c8ba92d4?q=80&w=2670&auto=format&fit=crop", position: "Past" },
+            { name: "The Magician", desc: "Manifestation, resourcefulness, power.", img: "https://images.unsplash.com/photo-1596727147814-2e2d631d8e12?q=80&w=2787&auto=format&fit=crop", position: "Present" },
+            { name: "The High Priestess", desc: "Intuition, sacred knowledge, subconscious mind.", img: "https://images.unsplash.com/photo-1596727147705-54a7128052a9?q=80&w=2787&auto=format&fit=crop", position: "Future" },
+            { name: "The Empress", desc: "Fertility, femininity, beauty, nature, abundance.", img: "https://images.unsplash.com/photo-1628169213123-5e985b86377e?q=80&w=2787&auto=format&fit=crop" },
+            { name: "The Emperor", desc: "Authority, structure, control, father figure.", img: "https://images.unsplash.com/photo-1596727147721-a3f5a0d33e8a?q=80&w=2787&auto=format&fit=crop" },
+            { name: "The Lovers", desc: "Love, union, relationships, choices, alignment.", img: "https://images.unsplash.com/photo-1596727147775-6e276020c029?q=80&w=2787&auto=format&fit=crop" },
+            { name: "The Hermit", desc: "Soul-searching, introspection, inner guidance.", img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2994&auto=format&fit=crop" },
+            { name: "Justice", desc: "Fairness, truth, law, cause and effect.", img: "https://images.unsplash.com/photo-1596727147841-3b7c4d519b5d?q=80&w=2787&auto=format&fit=crop" },
+            { name: "Death", desc: "Endings, change, transformation, transition.", img: "https://images.unsplash.com/photo-1636195225010-09a5c8ba92d4?q=80&w=2670&auto=format&fit=crop" },
+        ];
+
+        // --- Background Setup ---
+        const starsContainer = document.getElementById('stars-container');
+        const starCount = 100;
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            const size = Math.random() * 1.5 + 0.5;
+            const duration = Math.random() * 4 + 2;
+            const maxOpacity = Math.random() * 0.7 + 0.3;
+            star.style.left = `${x}%`;
+            star.style.top = `${y}%`;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.setProperty('--duration', `${duration}s`);
+            star.style.setProperty('--max-opacity', maxOpacity);
+            star.style.animationDelay = `${Math.random() * 5}s`;
+            starsContainer.appendChild(star);
+        }
+
+        // --- API Simulation Function (Gemini) ---
+        async function fetchGeminiPrediction(userData, drawnCards) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `You are a mystical, wise, and empathetic Tarot Reader. Your tone must be mysterious, elegant, and encouraging. Use the provided user data and the drawn three cards (Past, Present, Future) to craft a highly personalized and insightful reading.
+The user is asking about: "${userData.query}".
+User Details: Birthday (${userData.birthday}), City (${userData.city}), Gender (${userData.sex}).
+The Cards Drawn are:
+1. Past: ${drawnCards[0].name} - ${drawnCards[0].desc}
+2. Present: ${drawnCards[1].name} - ${drawnCards[1].desc}
+3. Future: ${drawnCards[2].name} - ${drawnCards[2].desc}
+
+Structure your response with two sections:
+1. The Reading: A flowing, three-paragraph narrative. Address the user directly, weaving in their personal details (like their city or a note on their birthday/sign, without being too specific) and the meanings of the three cards.
+2. The Suggestion: A final, single-paragraph of elegant, actionable advice based on the 'Future' card's influence.`;
+
+            const userQuery = `Generate the personalized three-card Tarot reading and suggestion.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            const maxRetries = 3;
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429 && attempt < maxRetries - 1) {
+                        const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue; // Retry
+                    }
+
+                    if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) return text;
+                    throw new Error("No text content received from API.");
+
+                } catch (error) {
+                    console.error(`Attempt ${attempt + 1} failed:`, error);
+                }
+            }
+            // Fallback content if API fails after all retries
+            return "The celestial lines are currently faint. The cards speak of a need for grounding and reflection. Trust your inner voice in the matter of your query. The **Past** guides your path, the **Present** demands courage, and the **Future** promises illumination.";
+        }
+
+        // --- View Rendering Logic ---
+        const appView = document.getElementById('app-view');
+        const appNav = document.getElementById('app-nav');
+
+        function setView(viewName) {
+            state.view = viewName;
+            render();
+        }
+
+        function render() {
+            appView.innerHTML = ''; // Clear current view
+            appNav.classList.add('hidden'); // Hide nav by default
+
+            switch (state.view) {
+                case 'input':
+                    renderInputView();
+                    break;
+                case 'draw':
+                    renderDrawView();
+                    break;
+                case 'results':
+                    renderResultsView();
+                    appNav.classList.remove('hidden');
+                    break;
+                default:
+                    renderInputView();
+            }
+        }
+
+        // --- 1. Data Input View ---
+        function renderInputView() {
+            appView.innerHTML = `
+                <div class="glass-panel p-6 space-y-5 fade-in">
+                    <h2 class="text-2xl text-gold font-serif text-center mb-6">Begin Your Query</h2>
+                    <form id="personal-data-form" class="space-y-4">
+                        <div>
+                            <label for="birthday" class="block mb-1 text-sm text-gray-300">Date of Birth</label>
+                            <input type="date" id="birthday" name="birthday" class="w-full input-glass" required>
+                        </div>
+                        <div>
+                            <label for="city" class="block mb-1 text-sm text-gray-300">City</label>
+                            <input type="text" id="city" name="city" placeholder="e.g., Paris, Kyoto" class="w-full input-glass" required>
+                        </div>
+                        <div>
+                            <label for="sex" class="block mb-1 text-sm text-gray-300">Gender Identity</label>
+                            <select id="sex" name="sex" class="w-full input-glass appearance-none" required>
+                                <option value="" disabled selected class="text-gray-500">Select...</option>
+                                <option value="F">Feminine Energy</option>
+                                <option value="M">Masculine Energy</option>
+                                <option value="NB">Non-Binary/Other</option>
+                                <option value="Prefer Not To Say">Prefer Not To Say</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="query" class="block mb-1 text-sm text-gray-300">Your Question / Focus</label>
+                            <textarea id="query" name="query" placeholder="e.g., What should I focus on next month?" rows="3" class="w-full input-glass" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-gold px-6 py-3 rounded-full w-full mt-6 text-sm uppercase tracking-widest">
+                            Continue to the Cards
+                        </button>
+                    </form>
+                </div>
+            `;
+
+            document.getElementById('personal-data-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                state.userData = {
+                    birthday: document.getElementById('birthday').value,
+                    city: document.getElementById('city').value,
+                    sex: document.getElementById('sex').value,
+                    query: document.getElementById('query').value,
+                };
+                setView('draw');
+            });
+        }
+
+        // --- 2. Card Draw View ---
+        function renderDrawView() {
+            state.drawnCards = [];
+            let deck = [...cardDeck]; // Copy the deck to shuffle/draw from
+            const shuffleArray = (arr) => {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+            };
+            shuffleArray(deck);
+            
+            const cardPositions = ['Past', 'Present', 'Future'];
+
+            // Inject the Draw UI
+            appView.innerHTML = `
+                <div class="text-center fade-in">
+                    <h2 class="text-2xl text-gold font-serif mb-2">Draw Three Cards</h2>
+                    <p class="text-gray-300 mb-8 font-light">Select 3 cards from the deck for your reading (Past, Present, Future).</p>
+
+                    <div id="deck-area" class="flex justify-center flex-wrap gap-3 mb-10">
+                        <!-- Card containers will be generated here -->
+                    </div>
+
+                    <div id="selected-cards-display" class="flex justify-center gap-4 mt-6">
+                        <!-- Drawn cards will appear here -->
+                    </div>
+
+                    <button id="get-reading-btn" onclick="prepareReading()" class="btn-gold px-6 py-3 rounded-full w-full max-w-xs text-sm uppercase tracking-widest mt-8" disabled>
+                        Reveal My Reading
+                    </button>
+                    <p id="draw-prompt" class="mt-4 text-sm text-yellow-300">Select your first card (Past)...</p>
+                </div>
+            `;
+
+            const deckArea = document.getElementById('deck-area');
+            const selectedCardsDisplay = document.getElementById('selected-cards-display');
+            const getReadingBtn = document.getElementById('get-reading-btn');
+            const drawPrompt = document.getElementById('draw-prompt');
+
+            // Generate 9 clickable cards
+            for (let i = 0; i < 9; i++) {
+                // Note: The card design relies heavily on the CSS definitions now.
+                deckArea.innerHTML += `
+                    <div class="card-container cursor-pointer transition duration-300 hover:scale-[1.05]" data-index="${i}">
+                        <div class="card-inner">
+                            <div class="card-back">
+                                <div class="card-pattern-symbol">
+                                    <i class="fas fa-scroll card-center-symbol"></i> 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Click listener for deck cards
+            deckArea.querySelectorAll('.card-container').forEach(cardEl => {
+                cardEl.addEventListener('click', () => {
+                    if (state.drawnCards.length >= 3 || cardEl.classList.contains('drawn')) return;
+                    
+                    const cardIndex = parseInt(cardEl.dataset.index);
+                    cardEl.classList.add('drawn'); // Mark as drawn
+
+                    // Move card to the selection area
+                    const clonedCard = cardEl.cloneNode(true);
+                    clonedCard.classList.remove('cursor-pointer', 'hover:scale-[1.05]');
+                    clonedCard.style.width = '80px';
+                    clonedCard.style.height = '140px';
+                    clonedCard.style.transform = `scale(1) rotate(${(Math.random() - 0.5) * 5}deg)`;
+                    
+                    // Assign card data
+                    const drawnCardData = { 
+                        ...deck.pop(), // Pop a random card from the shuffled deck
+                        position: cardPositions[state.drawnCards.length] 
+                    };
+                    
+                    state.drawnCards.push(drawnCardData);
+                    
+                    // Add card to display area
+                    selectedCardsDisplay.appendChild(clonedCard);
+                    
+                    // Animate flip after a short delay
+                    setTimeout(() => {
+                        clonedCard.classList.add('flipped');
+                        // Use a wrapper div for better control of the image area in the selection display
+                        clonedCard.querySelector('.card-front').innerHTML = `
+                            <div class="card-image w-full h-full p-2">
+                                <p class="text-[8px] font-serif text-gold absolute top-2 w-full text-center">${drawnCardData.position.toUpperCase()}</p>
+                                <img src="${drawnCardData.img}" class="h-3/4 w-full object-cover rounded-md mt-3" 
+                                    onerror="this.onerror=null;this.src='https://placehold.co/80x100/${getComputedStyle(document.body).getPropertyValue('--void-purple').trim().substring(1)}/${getComputedStyle(document.body).getPropertyValue('--gold').trim().substring(1)}?text=${drawnCardData.name.replace(/ /g, '+')}'">
+                                <p class="text-[10px] text-center font-serif text-white mt-1 leading-none">${drawnCardData.name}</p>
+                            </div>
+                        `;
+                    }, 500);
+
+                    // Update prompt text
+                    if (state.drawnCards.length < 3) {
+                        drawPrompt.innerText = `Select your card for the ${cardPositions[state.drawnCards.length]}...`;
+                    } else {
+                        drawPrompt.innerText = `Three cards have been drawn.`;
+                        getReadingBtn.disabled = false;
+                    }
+                    
+                    // Visually remove from deck area
+                    cardEl.style.opacity = '0';
+                    cardEl.style.pointerEvents = 'none';
+
+                });
+            });
+        }
+
+        // --- 3. Results View ---
+        async function prepareReading() {
+            // Transition to loading state
+            state.loading = true;
+            renderLoadingView();
+
+            // Run the API call
+            state.readingText = await fetchGeminiPrediction(state.userData, state.drawnCards);
+            
+            // Transition to results state
+            state.loading = false;
+            setView('results');
+        }
+
+        function renderLoadingView() {
+            appView.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-96 fade-in">
+                    <div class="spinner mb-6"></div>
+                    <h2 class="text-xl text-gold font-serif mb-2">Consulting the Cosmos...</h2>
+                    <p class="text-gray-400 text-center px-4">The cards are being woven with your personal destiny. This may take a moment.</p>
+                </div>
+            `;
+        }
+
+        function renderResultsView() {
+            const readingParts = state.readingText.split('\n').filter(p => p.trim() !== '');
+
+            let readingBody = '';
+            let suggestionBody = '';
+            
+            // Heuristic split based on generated structure
+            if (readingParts.length > 0) {
+                // Assume the first 3 paragraphs are the reading, the last is the suggestion
+                readingBody = readingParts.slice(0, Math.min(3, readingParts.length - 1)).map(p => `<p class="mb-4 text-gray-300 font-light">${p}</p>`).join('');
+                suggestionBody = readingParts[readingParts.length - 1];
+            }
+
+            // Display the cards and details, focusing on illustration prominence
+            const cardDisplay = state.drawnCards.map(card => `
+                <div class="text-center w-1/3 p-1">
+                    <div class="card-container mx-auto" style="width: 75px; height: 130px;">
+                        <div class="card-inner flipped">
+                            <div class="card-front">
+                                <div class="results-card-content">
+                                    <p class="text-[7px] font-serif text-gold w-full text-center mt-1">${card.position.toUpperCase()}</p>
+                                    <img src="${card.img}" class="object-cover rounded-md" 
+                                        onerror="this.onerror=null;this.src='https://placehold.co/75x90/${getComputedStyle(document.body).getPropertyValue('--void-purple').trim().substring(1)}/${getComputedStyle(document.body).getPropertyValue('--gold').trim().substring(1)}?text=${card.name.replace(/ /g, '+')}'">
+                                    <p class="card-title text-white font-serif mb-1">${card.name}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            appView.innerHTML = `
+                <div class="fade-in">
+                    <h2 class="text-2xl text-gold font-serif text-center mb-6">Your Arcana Reading</h2>
+                    
+                    <!-- Drawn Cards Summary -->
+                    <div class="flex justify-center mb-8 glass-panel py-4 mx-2">
+                        ${cardDisplay}
+                    </div>
+
+                    <!-- The Reading -->
+                    <div class="glass-panel p-6 mb-8">
+                        <h3 class="text-xl text-gold font-serif border-b border-gray-700 pb-2 mb-4">The Veil Unveiled</h3>
+                        ${readingBody}
+                    </div>
+
+                    <!-- Personalized Suggestion -->
+                    <div class="glass-panel p-6 border-l-4 border-gold">
+                        <h3 class="text-xl text-gold font-serif mb-3">Suggestion</h3>
+                        <p class="text-lg text-yellow-200 font-serif italic">${suggestionBody}</p>
+                    </div>
+
+                    <!-- REPLAY BUTTON -->
+                    <button onclick="setView('input')" class="btn-gold px-8 py-3 rounded-full w-full max-w-xs text-sm uppercase tracking-widest mt-8 mx-auto block transition">
+                        <i class="fas fa-redo mr-2"></i> Start New Reading
+                    </button>
+                    <!-- END REPLAY BUTTON -->
+
+                </div>
+            `;
+        }
+
+
+        // --- Initialize ---
+        document.addEventListener('DOMContentLoaded', () => {
+            render();
+        });
+
+    </script>
+</body>
+</html>
+
